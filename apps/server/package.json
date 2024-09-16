@@ -22,7 +22,7 @@
     "@nestjs/common": "^10.0.4",
     "@nestjs/core": "^10.0.4",
     "@nestjs/graphql": "^12.0.7",
-    "@nestjs/platform-express": "^10.0.4",
+    "@nestjs/platform-express": "^10.4.2",
     "@node-rs/argon2": "^1.5.0",
     "@node-rs/crc32": "^1.7.0",
     "@node-rs/jsonwebtoken": "^0.2.0",
