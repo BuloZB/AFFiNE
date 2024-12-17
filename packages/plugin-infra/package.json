@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@blocksuite/global": "0.0.0-20230719163314-76d863fc-nightly",
-    "@blocksuite/store": "0.0.0-20230719163314-76d863fc-nightly",
+    "@blocksuite/store": "0.1.0",
     "jotai": "^2.2.2"
   },
   "devDependencies": {
