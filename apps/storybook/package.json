@@ -10,10 +10,10 @@
     "@affine/component": "workspace:*",
     "@affine/i18n": "workspace:*",
     "@storybook/addon-actions": "^7.0.24",
-    "@storybook/addon-essentials": "^7.0.24",
+    "@storybook/addon-essentials": "^8.2.0",
     "@storybook/addon-interactions": "^7.0.24",
     "@storybook/addon-links": "^7.0.24",
-    "@storybook/addon-storysource": "^7.0.24",
+    "@storybook/addon-storysource": "^7.6.0",
     "@storybook/blocks": "^7.0.24",
     "@storybook/builder-vite": "^7.0.24",
     "@storybook/jest": "^0.1.0",
@@ -26,7 +26,7 @@
     "jest-mock": "^29.5.0",
     "serve": "^14.2.0",
     "storybook": "^7.0.24",
-    "storybook-dark-mode": "^3.0.0",
+    "storybook-dark-mode": "^4.0.0",
     "wait-on": "^7.0.1"
   },
   "devDependencies": {
