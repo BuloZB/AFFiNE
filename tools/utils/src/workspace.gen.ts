@@ -1475,6 +1475,11 @@ export const PackageList = [
     workspaceDependencies: [],
   },
   {
+    location: 'tools/doc-diff',
+    name: '@affine/doc-diff',
+    workspaceDependencies: ['tools/cli'],
+  },
+  {
     location: 'tools/playstore-auto-bump',
     name: '@affine/playstore-auto-bump',
     workspaceDependencies: ['tools/cli', 'tools/utils'],
@@ -1605,6 +1610,7 @@ export type PackageName =
   | '@affine-tools/cli'
   | '@affine/commitlint-config'
   | '@affine/copilot-result'
+  | '@affine/doc-diff'
   | '@affine/playstore-auto-bump'
   | '@affine/revert-update'
   | '@affine-tools/utils';

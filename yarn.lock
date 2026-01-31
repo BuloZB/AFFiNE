@@ -505,6 +505,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@affine/doc-diff@workspace:tools/doc-diff":
+  version: 0.0.0-use.local
+  resolution: "@affine/doc-diff@workspace:tools/doc-diff"
+  dependencies:
+    "@affine-tools/cli": "workspace:*"
+    "@types/node": "npm:^22.0.0"
+    typescript: "npm:^5.7.2"
+    yjs: "npm:^13.6.27"
+  languageName: unknown
+  linkType: soft
+
 "@affine/docs@workspace:docs/reference":
   version: 0.0.0-use.local
   resolution: "@affine/docs@workspace:docs/reference"
