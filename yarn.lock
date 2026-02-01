@@ -119,7 +119,7 @@ __metadata:
     "@affine/s3-compat": "workspace:*"
     "@napi-rs/simple-git": "npm:^0.1.22"
     "@perfsee/webpack": "npm:^1.13.0"
-    "@sentry/webpack-plugin": "npm:^3.0.0"
+    "@sentry/webpack-plugin": "npm:^4.0.0"
     "@swc/core": "npm:^1.10.1"
     "@tailwindcss/postcss": "npm:^4.0.0"
     "@types/lodash-es": "npm:^4.17.12"
@@ -15428,16 +15428,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/webpack-plugin@npm:^3.0.0":
-  version: 3.6.1
-  resolution: "@sentry/webpack-plugin@npm:3.6.1"
+"@sentry/webpack-plugin@npm:^4.0.0":
+  version: 4.8.0
+  resolution: "@sentry/webpack-plugin@npm:4.8.0"
   dependencies:
-    "@sentry/bundler-plugin-core": "npm:3.6.1"
+    "@sentry/bundler-plugin-core": "npm:4.8.0"
     unplugin: "npm:1.0.1"
     uuid: "npm:^9.0.0"
   peerDependencies:
     webpack: ">=4.40.0"
-  checksum: 10/2d3fbb2688398f58e859d36058a88b3668583741fc3be036ba5f09dc6ad9703ddcad486ba4f76e5fa257a8473dc66d7f0e47407e60d6b4943f8952615752d3fd
+  checksum: 10/d29568e272a3b5d4a3099ca2925ff8fa2a155b0896dfca2bd0a3b7ebaa7c6f516ed4e1f9a407045d20db90a741927a35140d9327d6bd9e0b2369498220072011
   languageName: node
   linkType: hard
 
