@@ -962,7 +962,7 @@ __metadata:
     "@ai-sdk/openai": "npm:^2.0.80"
     "@ai-sdk/openai-compatible": "npm:^1.0.28"
     "@ai-sdk/perplexity": "npm:^2.0.21"
-    "@apollo/server": "npm:^4.12.2"
+    "@apollo/server": "npm:^4.13.0"
     "@faker-js/faker": "npm:^10.1.0"
     "@fal-ai/serverless-client": "npm:^0.15.0"
     "@google-cloud/opentelemetry-cloud-trace-exporter": "npm:^3.0.0"
@@ -1336,9 +1336,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/server@npm:^4.12.2":
-  version: 4.12.2
-  resolution: "@apollo/server@npm:4.12.2"
+"@apollo/server@npm:^4.13.0":
+  version: 4.13.0
+  resolution: "@apollo/server@npm:4.13.0"
   dependencies:
     "@apollo/cache-control-types": "npm:^1.0.3"
     "@apollo/server-gateway-interface": "npm:^1.1.1"
@@ -1355,6 +1355,7 @@ __metadata:
     "@types/express-serve-static-core": "npm:^4.17.30"
     "@types/node-fetch": "npm:^2.6.1"
     async-retry: "npm:^1.2.1"
+    content-type: "npm:^1.0.5"
     cors: "npm:^2.8.5"
     express: "npm:^4.21.1"
     loglevel: "npm:^1.6.8"
@@ -1366,7 +1367,7 @@ __metadata:
     whatwg-mimetype: "npm:^3.0.0"
   peerDependencies:
     graphql: ^16.6.0
-  checksum: 10/742ee13a858186be20e23a5090bb8dbd4bb0c6774acd8189c38a959a86c8c88d1ae67b3b644626bd76c09531d565256ef8f27781b85e40caede5be775b22e408
+  checksum: 10/7dbe6b7f2ff8dc3d397310c90fb0da281cec744346e9b7591066c2102c72f98b300df5b1c5b526eef8ed443a5d88123a19fdd53ec44c064598799cc73bc91469
   languageName: node
   linkType: hard
 
