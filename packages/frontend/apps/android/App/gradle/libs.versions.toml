@@ -16,7 +16,7 @@ androidx-navigation            = "2.9.0"
 apollo                         = "4.2.0"
 apollo-kotlin-adapters         = "0.0.6"
 # @keep
-compileSdk                 = "35"
+compileSdk                 = "36"
 firebase-bom               = "33.13.0"
 firebase-crashlytics       = "3.0.3"
 google-services            = "4.4.2"
