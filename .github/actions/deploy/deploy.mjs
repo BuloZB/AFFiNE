@@ -42,7 +42,7 @@ const replicaConfig = {
 };
 
 const cpuConfig = {
-  beta: { front: '2', graphql: '1', doc: '1' },
+  beta: { front: '1', graphql: '1', doc: '1' },
   canary: { front: '500m', graphql: '1', doc: '500m' },
 };
 
