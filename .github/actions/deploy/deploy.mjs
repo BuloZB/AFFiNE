@@ -25,7 +25,9 @@ const buildType = BUILD_TYPE || 'canary';
 
 const isProduction = buildType === 'stable';
 const isBeta = buildType === 'beta';
+const isCanary = buildType === 'canary';
 const isInternal = buildType === 'internal';
+const isSpotEnabled = isBeta || isCanary;
 
 const replicaConfig = {
   stable: {
@@ -72,6 +74,9 @@ const createHelmCommand = ({ isDryRun }) => {
     `--set-string global.indexer.endpoint="${AFFINE_INDEXER_SEARCH_ENDPOINT}"`,
     `--set-string global.indexer.apiKey="${AFFINE_INDEXER_SEARCH_API_KEY}"`,
   ];
+  const cloudSqlNodeSelector = isBeta
+    ? `{ \\"iam.gke.io/gke-metadata-server-enabled\\": \\"true\\", \\"cloud.google.com/gke-spot\\": \\"true\\" }`
+    : `{ \\"iam.gke.io/gke-metadata-server-enabled\\": \\"true\\" }`;
   const serviceAnnotations = [
     `--set-json   front.serviceAccount.annotations="{ \\"iam.gke.io/gcp-service-account\\": \\"${APP_IAM_ACCOUNT}\\" }"`,
     `--set-json   graphql.serviceAccount.annotations="{ \\"iam.gke.io/gcp-service-account\\": \\"${APP_IAM_ACCOUNT}\\" }"`,
@@ -84,10 +89,18 @@ const createHelmCommand = ({ isDryRun }) => {
           `--set-json   front.services.renderer.annotations="{ \\"cloud.google.com/neg\\": \\"{\\\\\\"ingress\\\\\\": true}\\" }"`,
           `--set-json   graphql.service.annotations="{ \\"cloud.google.com/neg\\": \\"{\\\\\\"ingress\\\\\\": true}\\" }"`,
           `--set-json   cloud-sql-proxy.serviceAccount.annotations="{ \\"iam.gke.io/gcp-service-account\\": \\"${CLOUD_SQL_IAM_ACCOUNT}\\" }"`,
-          `--set-json   cloud-sql-proxy.nodeSelector="{ \\"iam.gke.io/gke-metadata-server-enabled\\": \\"true\\" }"`,
+          `--set-json   cloud-sql-proxy.nodeSelector="${cloudSqlNodeSelector}"`,
         ]
       : []
   );
+  const spotNodeSelector = `{ \\"cloud.google.com/gke-spot\\": \\"true\\" }`;
+  const spotScheduling = isSpotEnabled
+    ? [
+        `--set-json   front.nodeSelector="${spotNodeSelector}"`,
+        `--set-json   graphql.nodeSelector="${spotNodeSelector}"`,
+        `--set-json   doc.nodeSelector="${spotNodeSelector}"`,
+      ]
+    : [];
 
   const cpu = cpuConfig[buildType];
   const memory = memoryConfig[buildType];
@@ -146,6 +159,7 @@ const createHelmCommand = ({ isDryRun }) => {
     `--set-string doc.app.host="${primaryHost}"`,
     `--set        doc.replicaCount=${replica.doc}`,
     ...serviceAnnotations,
+    ...spotScheduling,
     ...resources,
     `--timeout 10m`,
     flag,
