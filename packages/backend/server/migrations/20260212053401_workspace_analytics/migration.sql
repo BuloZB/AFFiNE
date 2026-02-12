@@ -63,19 +63,19 @@ DROP FUNCTION IF EXISTS set_workspace_feature_id_from_name();
 DROP FUNCTION IF EXISTS ensure_feature_exists(TEXT);
 
 ALTER TABLE
-  "user_features" DROP CONSTRAINT "user_features_feature_id_fkey";
+  "user_features" DROP CONSTRAINT IF EXISTS "user_features_feature_id_fkey";
 
 ALTER TABLE
-  "workspace_features" DROP CONSTRAINT "workspace_features_feature_id_fkey";
+  "workspace_features" DROP CONSTRAINT IF EXISTS "workspace_features_feature_id_fkey";
 
-DROP INDEX "user_features_feature_id_idx";
+DROP INDEX IF EXISTS "user_features_feature_id_idx";
 
-DROP INDEX "workspace_features_feature_id_idx";
-
-ALTER TABLE
-  "user_features" DROP COLUMN "feature_id";
+DROP INDEX IF EXISTS "workspace_features_feature_id_idx";
 
 ALTER TABLE
-  "workspace_features" DROP COLUMN "feature_id";
+  "user_features" DROP COLUMN IF EXISTS "feature_id";
 
-DROP TABLE "features";
+ALTER TABLE
+  "workspace_features" DROP COLUMN IF EXISTS "feature_id";
+
+DROP TABLE IF EXISTS "features";
