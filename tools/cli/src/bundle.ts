@@ -31,12 +31,31 @@ import {
   createNodeTargetConfig as createWebpackNodeTargetConfig,
   createWorkerTargetConfig as createWebpackWorkerTargetConfig,
 } from './webpack';
+import {
+  shouldUploadReleaseAssets,
+  uploadDistAssetsToS3,
+} from './webpack/s3-plugin.js';
 
 type WorkerConfig = { name: string };
 type CreateWorkerTargetConfig = (pkg: Package, entry: string) => WorkerConfig;
 
 function assertRspackSupportedPackage(pkg: Package) {
   assertRspackSupportedPackageName(pkg.name);
+}
+
+function shouldUploadAssetsForPackage(pkg: Package): boolean {
+  return (
+    !!process.env.R2_SECRET_ACCESS_KEY && shouldUploadReleaseAssets(pkg.name)
+  );
+}
+
+async function uploadAssetsForPackage(pkg: Package, logger: Logger) {
+  if (!shouldUploadAssetsForPackage(pkg)) {
+    return;
+  }
+  logger.info('Uploading dist assets to R2...');
+  await uploadDistAssetsToS3(pkg.distPath.value);
+  logger.info('Uploaded dist assets to R2.');
 }
 
 function getBaseWorkerConfigs(
@@ -253,20 +272,34 @@ export class BundleCommand extends PackageCommand {
       throw new Error('Failed to create webpack compiler');
     }
 
-    compiler.run((error, stats) => {
-      if (error) {
-        console.error(error);
-        process.exit(1);
-      }
-      if (stats) {
-        if (stats.hasErrors()) {
-          console.error(stats.toString('errors-only'));
-          process.exit(1);
-        } else {
-          console.log(stats.toString('minimal'));
+    try {
+      const stats = await new Promise<webpack.Stats | webpack.MultiStats>(
+        (resolve, reject) => {
+          compiler.run((error, stats) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            if (!stats) {
+              reject(new Error('Failed to get webpack stats'));
+              return;
+            }
+            resolve(stats);
+          });
         }
+      );
+      if (stats.hasErrors()) {
+        console.error(stats.toString('errors-only'));
+        process.exit(1);
+        return;
       }
-    });
+      console.log(stats.toString('minimal'));
+      await uploadAssetsForPackage(pkg, logger);
+    } catch (error) {
+      console.error(error);
+      process.exit(1);
+      return;
+    }
   }
 
   static async dev(
@@ -338,20 +371,32 @@ export class BundleCommand extends PackageCommand {
       throw new Error('Failed to create rspack compiler');
     }
 
-    compiler.run((error, stats) => {
-      if (error) {
-        console.error(error);
+    try {
+      const stats = await new Promise<any>((resolve, reject) => {
+        compiler.run((error, stats) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          if (!stats) {
+            reject(new Error('Failed to get rspack stats'));
+            return;
+          }
+          resolve(stats);
+        });
+      });
+      if (stats.hasErrors()) {
+        console.error(stats.toString('errors-only'));
         process.exit(1);
+        return;
       }
-      if (stats) {
-        if (stats.hasErrors()) {
-          console.error(stats.toString('errors-only'));
-          process.exit(1);
-        } else {
-          console.log(stats.toString('minimal'));
-        }
-      }
-    });
+      console.log(stats.toString('minimal'));
+      await uploadAssetsForPackage(pkg, logger);
+    } catch (error) {
+      console.error(error);
+      process.exit(1);
+      return;
+    }
   }
 
   static async devWithRspack(

@@ -17,7 +17,6 @@ import {
   type CreateHTMLPluginConfig,
   createHTMLPlugins as createWebpackCompatibleHTMLPlugins,
 } from '../webpack/html-plugin.js';
-import { WebpackS3Plugin } from '../webpack/s3-plugin.js';
 
 const require = createRequire(import.meta.url);
 
@@ -277,10 +276,6 @@ export function createHTMLTargetConfig(
             },
           ],
         }),
-      !buildConfig.debug &&
-        (buildConfig.isWeb || buildConfig.isMobileWeb || buildConfig.isAdmin) &&
-        process.env.R2_SECRET_ACCESS_KEY &&
-        new WebpackS3Plugin(),
       process.env.SENTRY_AUTH_TOKEN &&
         process.env.SENTRY_ORG &&
         process.env.SENTRY_PROJECT &&
