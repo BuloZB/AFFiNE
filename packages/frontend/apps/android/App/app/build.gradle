@@ -176,7 +176,10 @@ afterEvaluate {
 }
 
 def localProps = new Properties()
-file("${rootProject.projectDir}/local.properties").withInputStream { localProps.load(it) }
+def localPropsFile = file("${rootProject.projectDir}/local.properties")
+if (localPropsFile.exists()) {
+    localPropsFile.withInputStream { localProps.load(it) }
+}
 def cargoPath = localProps.getProperty("rust.cargoCommand") ?: 'cargo'
 android.applicationVariants.configureEach { variant ->
     def variantName = "${variant.name.substring(0,1).toUpperCase()}${variant.name.substring(1)}"
