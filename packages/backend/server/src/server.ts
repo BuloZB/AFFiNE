@@ -18,9 +18,11 @@ import {
 } from './base';
 import { SocketIoAdapter } from './base/websocket';
 import { AuthGuard } from './core/auth';
+import { TelemetryService } from './core/telemetry/service';
 import { serverTimingAndCache } from './middleware/timing';
 
 const OneMB = 1024 * 1024;
+
 export async function run() {
   const { AppModule } = await import('./app.module');
 
@@ -37,25 +39,41 @@ export async function run() {
   app.useLogger(logger);
   const config = app.get(Config);
   const url = app.get(URLHelper);
+  let telemetry: TelemetryService | null = null;
+  try {
+    telemetry = app.get(TelemetryService, { strict: false });
+  } catch {
+    telemetry = null;
+  }
 
-  const allowedOrigins = buildCorsAllowedOrigins(url);
+  const defaultAllowedOrigins = buildCorsAllowedOrigins(url);
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      corsOriginCallback(
-        origin,
-        allowedOrigins,
-        blockedOrigin =>
-          logger.warn(`Blocked CORS request from origin: ${blockedOrigin}`),
-        callback
-      );
-    },
-    credentials: true,
-    methods: CORS_ALLOWED_METHODS,
-    allowedHeaders: CORS_ALLOWED_HEADERS,
-    exposedHeaders: CORS_EXPOSED_HEADERS,
-    maxAge: 86400,
-    optionsSuccessStatus: 204,
+  app.enableCors((req, callback) => {
+    const requestPath = req.path ?? req.url ?? '';
+    const appendedOrigins = telemetry?.getAllowedOrigins(requestPath) ?? [];
+    const finalAllowedOrigins = appendedOrigins.length
+      ? new Set([...defaultAllowedOrigins, ...appendedOrigins])
+      : defaultAllowedOrigins;
+
+    callback(null, {
+      origin: (origin, originCallback) => {
+        corsOriginCallback(
+          origin,
+          finalAllowedOrigins,
+          blockedOrigin =>
+            logger.warn(`Blocked CORS request from origin: ${blockedOrigin}`, {
+              requestPath,
+            }),
+          originCallback
+        );
+      },
+      credentials: true,
+      methods: CORS_ALLOWED_METHODS,
+      allowedHeaders: CORS_ALLOWED_HEADERS,
+      exposedHeaders: CORS_EXPOSED_HEADERS,
+      maxAge: 86400,
+      optionsSuccessStatus: 204,
+    });
   });
 
   if (config.server.path) {
