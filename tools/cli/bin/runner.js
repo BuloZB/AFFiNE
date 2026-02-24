@@ -9,6 +9,7 @@ const scriptsSrcFolder = join(scriptsFolder, 'src');
 const projectRoot = join(scriptsFolder, '..', '..');
 const serverRoot = join(projectRoot, 'packages', 'backend', 'server');
 const tsRuntimeRegister = join(scriptsFolder, 'register.js');
+const tsxRuntimeRegister = join(scriptsFolder, 'tsx-register.js');
 
 const [node, _self, file, ...options] = process.argv;
 
@@ -64,7 +65,7 @@ if (
   if (scriptLocation.startsWith(serverRoot)) {
     nodeOptions.unshift(`--import=${pathToFileURL(tsRuntimeRegister)}`);
   } else {
-    nodeOptions.unshift('--import=tsx');
+    nodeOptions.unshift(`--import=${pathToFileURL(tsxRuntimeRegister)}`);
   }
 } else {
   nodeOptions.unshift('--experimental-specifier-resolution=node');

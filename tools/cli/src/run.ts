@@ -15,6 +15,10 @@ const serverRuntimeLoader = currentDir
   .join('../register.js')
   .toFileUrl()
   .toString();
+const tsxRuntimeLoader = currentDir
+  .join('../tsx-register.js')
+  .toFileUrl()
+  .toString();
 
 const ignoreLoaderScripts = [
   'vitest',
@@ -165,9 +169,11 @@ export class RunCommand extends PackageCommand {
     args = extractedArgs;
 
     const bin = args[0] === 'yarn' ? args[1] : args[0];
-    const loader = pkg.name === '@affine/server' ? serverRuntimeLoader : 'tsx';
+    const loader =
+      pkg.name === '@affine/server' ? serverRuntimeLoader : tsxRuntimeLoader;
     const hasKnownLoader =
       process.env.NODE_OPTIONS?.includes('tsx') ||
+      process.env.NODE_OPTIONS?.includes(tsxRuntimeLoader) ||
       process.env.NODE_OPTIONS?.includes(serverRuntimeLoader);
 
     // very simple test for auto ts/mjs scripts
