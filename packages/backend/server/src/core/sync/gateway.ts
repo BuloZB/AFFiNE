@@ -218,6 +218,9 @@ export class SpaceSyncGateway
   private readonly localUserConnectionCounts = new Map<string, number>();
   private unresolvedPresenceSockets = 0;
   private flushTimer?: NodeJS.Timeout;
+  private activeUsersFlushTimer?: NodeJS.Timeout;
+  private activeUsersFlushInFlight = false;
+  private activeUsersFlushQueued = false;
 
   constructor(
     private readonly ac: AccessController,
@@ -229,12 +232,9 @@ export class SpaceSyncGateway
   ) {}
 
   onModuleInit() {
+    this.scheduleActiveUsersFlush(0);
     this.flushTimer = setInterval(() => {
-      this.flushActiveUsersMinute().catch(error => {
-        this.logger.warn(
-          `Failed to flush active users minute: ${this.formatError(error)}`
-        );
-      });
+      this.scheduleActiveUsersFlush(0);
     }, 60_000);
     this.flushTimer.unref?.();
   }
@@ -244,6 +244,11 @@ export class SpaceSyncGateway
       clearInterval(this.flushTimer);
       this.flushTimer = undefined;
     }
+    if (this.activeUsersFlushTimer) {
+      clearTimeout(this.activeUsersFlushTimer);
+      this.activeUsersFlushTimer = undefined;
+    }
+    this.activeUsersFlushQueued = false;
   }
 
   private encodeUpdates(updates: Uint8Array[]) {
@@ -331,13 +336,7 @@ export class SpaceSyncGateway
     metrics.socketio.gauge('connections').record(this.connectionCount);
     const userId = this.attachPresenceUserId(client);
     this.trackConnectedSocket(client.id, userId);
-    void this.flushActiveUsersMinute({
-      aggregateAcrossCluster: false,
-    }).catch(error => {
-      this.logger.warn(
-        `Failed to flush active users minute: ${this.formatError(error)}`
-      );
-    });
+    this.scheduleActiveUsersFlush();
   }
 
   handleDisconnect(client: Socket) {
@@ -347,13 +346,7 @@ export class SpaceSyncGateway
       `Connection disconnected, total: ${this.connectionCount}`
     );
     metrics.socketio.gauge('connections').record(this.connectionCount);
-    void this.flushActiveUsersMinute({
-      aggregateAcrossCluster: false,
-    }).catch(error => {
-      this.logger.warn(
-        `Failed to flush active users minute: ${this.formatError(error)}`
-      );
-    });
+    this.scheduleActiveUsersFlush();
   }
 
   private attachPresenceUserId(client: Socket): string | null {
@@ -435,13 +428,55 @@ export class SpaceSyncGateway
     }
   }
 
+  private scheduleActiveUsersFlush(delayMs = 250) {
+    if (this.activeUsersFlushTimer) {
+      return;
+    }
+
+    if (this.activeUsersFlushInFlight) {
+      this.activeUsersFlushQueued = true;
+      return;
+    }
+
+    this.activeUsersFlushTimer = setTimeout(() => {
+      this.activeUsersFlushTimer = undefined;
+      this.runScheduledActiveUsersFlush();
+    }, delayMs);
+    this.activeUsersFlushTimer.unref?.();
+  }
+
+  private runScheduledActiveUsersFlush() {
+    if (this.activeUsersFlushInFlight) {
+      this.activeUsersFlushQueued = true;
+      return;
+    }
+
+    this.activeUsersFlushInFlight = true;
+    void this.flushActiveUsersMinute()
+      .catch(error => {
+        this.logger.warn(
+          `Failed to flush active users minute: ${this.formatError(error)}`
+        );
+      })
+      .finally(() => {
+        this.activeUsersFlushInFlight = false;
+        if (this.activeUsersFlushQueued) {
+          this.activeUsersFlushQueued = false;
+          this.scheduleActiveUsersFlush(0);
+        }
+      });
+  }
+
   private async flushActiveUsersMinute(options?: {
     aggregateAcrossCluster?: boolean;
+    skipWriteOnAggregateError?: boolean;
   }) {
     const minute = new Date();
     minute.setSeconds(0, 0);
 
     const aggregateAcrossCluster = options?.aggregateAcrossCluster ?? true;
+    const skipWriteOnAggregateError =
+      options?.skipWriteOnAggregateError ?? aggregateAcrossCluster;
     let activeUsers = this.resolveLocalActiveUsers();
     if (aggregateAcrossCluster) {
       try {
@@ -467,8 +502,9 @@ export class SpaceSyncGateway
         }
       } catch (error) {
         this.logger.warn(
-          `Failed to aggregate active users from sockets, using local value: ${this.formatError(error)}`
+          `Failed to aggregate active users from sockets: ${this.formatError(error)}`
         );
+        if (skipWriteOnAggregateError) return;
       }
     }
 
