@@ -120,6 +120,14 @@ export default defineConfig({
 
     search: {
       provider: 'local',
+      options: {
+        _render(src, env, md) {
+          if (env.relativePath.startsWith('api/')) {
+            return '';
+          }
+          return md.render(src, env);
+        },
+      },
     },
   },
   markdown: {

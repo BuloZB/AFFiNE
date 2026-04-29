@@ -1,3 +1,6 @@
+import { existsSync, readdirSync } from 'node:fs';
+import { join, parse } from 'node:path';
+
 import type { DefaultTheme } from 'vitepress';
 
 export const guide: DefaultTheme.NavItem[] = [
@@ -100,16 +103,47 @@ export const guide: DefaultTheme.NavItem[] = [
 export const reference: DefaultTheme.NavItem[] = [
   {
     text: 'API Reference',
-    items: [
-      { text: '@blocksuite/store', link: 'api/@blocksuite/store/index' },
-      {
-        text: '@blocksuite/block-std',
-        link: 'api/@blocksuite/block-std/index',
-      },
-      { text: '@blocksuite/inline', link: 'api/@blocksuite/inline/index' },
-    ],
+    items: getApiReferenceItems(),
   },
 ];
+
+function getApiReferenceItems(): DefaultTheme.NavItem[] {
+  const apiDir = join(process.cwd(), 'api', '@blocksuite');
+
+  if (!existsSync(apiDir)) {
+    return [
+      { text: '@blocksuite/store', link: 'api/@blocksuite/store' },
+      { text: '@blocksuite/std', link: 'api/@blocksuite/std/index' },
+      { text: '@blocksuite/affine', link: 'api/@blocksuite/affine' },
+    ];
+  }
+
+  return readdirSync(apiDir, { withFileTypes: true })
+    .flatMap(entry => {
+      if (entry.isFile() && entry.name.endsWith('.md')) {
+        const name = parse(entry.name).name;
+        return [
+          { text: `@blocksuite/${name}`, link: `api/@blocksuite/${name}` },
+        ];
+      }
+
+      if (entry.isDirectory()) {
+        const indexPath = join(apiDir, entry.name, 'index.md');
+
+        if (existsSync(indexPath)) {
+          return [
+            {
+              text: `@blocksuite/${entry.name}`,
+              link: `api/@blocksuite/${entry.name}/index`,
+            },
+          ];
+        }
+      }
+
+      return [];
+    })
+    .sort((a, b) => a.text.localeCompare(b.text));
+}
 
 export const components: DefaultTheme.NavItem[] = [
   {

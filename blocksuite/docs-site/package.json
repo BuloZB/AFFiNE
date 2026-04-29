@@ -8,10 +8,11 @@
   "license": "MPL-2.0",
   "type": "module",
   "scripts": {
-    "typedoc": "typedoc --options ./typedoc.json",
+    "build:deps": "tsc -b ../affine/all",
+    "typedoc": "yarn run build:deps && typedoc --options ./typedoc.json",
     "dev": "yarn run typedoc && yarn exec vitepress dev --port 5200",
     "dev:nobuild": "yarn exec vitepress dev --port 5200",
-    "build": "yarn run typedoc && NODE_OPTIONS=--max-old-space-size=8192 yarn exec vitepress build",
+    "build": "yarn run typedoc && NODE_OPTIONS=--max-old-space-size=8192 yarn exec vitepress build && node ./copy-pages-worker.mjs",
     "preview": "yarn exec vitepress preview"
   },
   "dependencies": {
