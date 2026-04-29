@@ -1,3 +1,7 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
+
+import type MarkdownIt from 'markdown-it';
 import container from 'markdown-it-container';
 import wasm from 'vite-plugin-wasm';
 import { defineConfig } from 'vitepress';
@@ -137,6 +141,106 @@ export default defineConfig({
           return renderSandbox(tokens, idx, 'code-sandbox');
         },
       });
+      rewriteApiMemberLinks(md);
     },
   },
 });
+
+const apiMemberLinkPattern =
+  /^\/api\/@blocksuite\/(.+)\/(?:classes|enumerations|functions|interfaces|type-aliases|variables)\/([^/?#]+)(?:\.html)?((?:\?[^#]*)?(?:#.*)?)?$/;
+
+function rewriteApiMemberLinks(md: MarkdownIt) {
+  const apiMemberTargets = getApiMemberTargets();
+  const defaultRender =
+    md.renderer.rules.link_open ??
+    ((tokens, idx, options, _env, self) =>
+      self.renderToken(tokens, idx, options));
+
+  md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+    const token = tokens[idx];
+    const hrefIndex = token.attrIndex('href');
+
+    if (hrefIndex >= 0 && token.attrs) {
+      token.attrs[hrefIndex][1] = rewriteApiMemberLink(
+        token.attrs[hrefIndex][1],
+        apiMemberTargets
+      );
+    }
+
+    return defaultRender(tokens, idx, options, env, self);
+  };
+}
+
+function rewriteApiMemberLink(
+  href: string,
+  apiMemberTargets: Map<string, string>
+) {
+  const match = href.match(apiMemberLinkPattern);
+
+  if (!match) {
+    return href;
+  }
+
+  const [, packagePath, memberFileName, suffix = ''] = match;
+  const target = apiMemberTargets.get(decodeURIComponent(memberFileName));
+
+  if (target) {
+    return `${target}${suffix}`;
+  }
+
+  return `/api/@blocksuite/${packagePath}.html${suffix}`;
+}
+
+function getApiMemberTargets() {
+  const apiDir = join(process.cwd(), 'api');
+  const targets = new Map<string, string>();
+
+  if (!existsSync(apiDir)) {
+    return targets;
+  }
+
+  for (const file of findMarkdownFiles(apiDir)) {
+    const route = `/api/${relative(apiDir, file)
+      .replace(/\.md$/, '.html')
+      .split(sep)
+      .join('/')}`;
+
+    for (const line of readFileSync(file, 'utf8').split('\n')) {
+      const member = line.match(/^### (.+)$/);
+
+      if (!member) {
+        continue;
+      }
+
+      const name = getApiMemberName(member[1]);
+
+      if (name && !targets.has(name)) {
+        targets.set(name, route);
+      }
+    }
+  }
+
+  return targets;
+}
+
+function findMarkdownFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const path = join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      return findMarkdownFiles(path);
+    }
+
+    return entry.isFile() && entry.name.endsWith('.md') ? [path] : [];
+  });
+}
+
+function getApiMemberName(heading: string) {
+  return heading
+    .replaceAll('`', '')
+    .replace(/\\([<>])/g, '$1')
+    .replace(/^(abstract|readonly)\s+/, '')
+    .replace(/\(\)$/, '')
+    .replace(/<.*>$/, '')
+    .trim();
+}
