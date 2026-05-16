@@ -4,11 +4,13 @@ mod utils;
 
 pub mod doc;
 pub mod doc_loader;
+pub mod entitlement;
 pub mod file_type;
 pub mod hashcash;
 pub mod html_sanitize;
 pub mod image;
 pub mod llm;
+pub mod permission;
 pub mod safe_fetch;
 pub mod tiktoken;
 

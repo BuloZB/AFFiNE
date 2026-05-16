@@ -169,6 +169,8 @@ export interface Chunk {
  */
 export declare function createDocWithMarkdown(title: string, markdown: string, docId: string): Buffer
 
+export declare function evaluatePermissionV1(input: any): any
+
 export declare function fetchRemoteAttachment(request: RemoteAttachmentFetchRequest): Promise<RemoteAttachmentFetchResponse>
 
 export declare function fromModelName(modelName: string): Tokenizer | null
@@ -475,6 +477,10 @@ export declare function parsePageDoc(docBin: Buffer, maxSummaryLength?: number |
 
 export declare function parseWorkspaceDoc(docBin: Buffer): NativeWorkspaceDocContent | null
 
+export declare function permissionActionRoleMatrixV1(): any
+
+export declare function permissionActionRoleMatrixV1Json(): string
+
 export declare function processImage(input: Buffer, maxEdge: number, keepExif: boolean): Promise<Buffer>
 
 export type PromptBuiltin =  'Date'|
@@ -634,6 +640,47 @@ export interface RerankCandidate {
   id?: string
   text: string
 }
+
+export interface ResolvedEntitlement {
+  plan: string
+  valid: boolean
+  status: string
+  quantity?: number
+  expiresAt?: string
+  subjectId?: string
+  targetId?: string
+  recurring?: string
+  issuedAt?: string
+  entity?: string
+  issuer?: string
+  quota: ResolvedQuota
+  flags: Record<string, boolean>
+  errorCode?: string
+  errorMessage?: string
+}
+
+export interface ResolvedQuota {
+  blobLimit: number
+  storageQuota: number
+  seatLimit?: number
+  seatQuota?: number
+  historyPeriod: number
+  copilotActionLimit?: number
+}
+
+export interface ResolveEntitlementInput {
+  deploymentType: string
+  targetType: string
+  targetId?: string
+  plan?: string
+  quantity?: number
+  signedPayload?: Buffer
+  publicKey?: string
+  licenseAesKey?: string
+  now: string
+}
+
+export declare function resolveEntitlementV1(input: ResolveEntitlementInput): ResolvedEntitlement
 
 export declare function runNativeActionRecipePreparedStream(input: ActionRuntimeInput, callback: ((err: Error | null, arg: string) => void)): LlmStreamHandle
 
