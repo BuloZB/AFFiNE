@@ -3409,7 +3409,7 @@ export interface UserType {
   /** Get user settings */
   settings: UserSettingsType;
   subscriptions: Array<SubscriptionType>;
-  /** @deprecated use [/api/auth/sign-in?native=true] instead */
+  /** @deprecated use native session exchange instead */
   token: TokenType;
 }
 
@@ -4175,6 +4175,7 @@ export type ListUsersQuery = {
 };
 
 export type SendTestEmailMutationVariables = Exact<{
+  name: Scalars['String']['input'];
   host: Scalars['String']['input'];
   port: Scalars['Int']['input'];
   sender: Scalars['String']['input'];
