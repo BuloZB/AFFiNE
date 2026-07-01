@@ -23,7 +23,7 @@ pub(crate) mod object_storage;
 
 use self::object_storage::{
   ObjectStorageConfig, StorageProviderConfig,
-  types::{ObjectGetResult, ObjectListEntry, ObjectMetadata, ObjectPutMetadata},
+  types::{ObjectGetResult, ObjectListEntry, ObjectMetadata, ObjectPutMetadata, checksum_crc32_base64},
 };
 pub(super) use super::{
   RuntimeError, RuntimeResult,
@@ -1081,7 +1081,7 @@ fn fs_put(config: &FsStorageConfig, key: &str, body: Vec<u8>, metadata: ObjectPu
     return Err(RuntimeError::invalid_input("StorageRuntime fs content length mismatch"));
   }
   if let Some(checksum) = metadata.checksum_crc32.as_deref() {
-    let actual = format!("{:x}", crc32fast::hash(&body));
+    let actual = checksum_crc32_base64(&body);
     if actual != checksum {
       return Err(RuntimeError::invalid_input("StorageRuntime fs checksum mismatch"));
     }
@@ -1439,7 +1439,7 @@ mod tests {
       bucket: "bucket".to_string(),
     };
     let body = b"hello".to_vec();
-    let checksum = format!("{:x}", crc32fast::hash(&body));
+    let checksum = checksum_crc32_base64(&body);
 
     fs_put(
       &config,
@@ -1741,7 +1741,7 @@ mod tests {
       ObjectPutMetadata {
         content_type: Some("text/plain".to_string()),
         content_length: Some(body.len() as i64),
-        checksum_crc32: Some(format!("{:x}", crc32fast::hash(&body))),
+        checksum_crc32: Some(checksum_crc32_base64(&body)),
       },
     )
     .await?;

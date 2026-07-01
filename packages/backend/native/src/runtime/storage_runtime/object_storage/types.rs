@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde::Deserialize;
 
 use super::super::{
@@ -90,9 +91,7 @@ impl From<RuntimeObjectStoragePutOptions> for ObjectPutMetadata {
 impl ObjectPutMetadata {
   pub(crate) fn complete_for_body(mut self, body: &[u8]) -> Self {
     self.content_length.get_or_insert(body.len() as i64);
-    self
-      .checksum_crc32
-      .get_or_insert_with(|| format!("{:x}", crc32fast::hash(body)));
+    self.checksum_crc32.get_or_insert_with(|| checksum_crc32_base64(body));
     self
       .content_type
       .get_or_insert_with(|| crate::file_type::get_mime(body));
@@ -109,6 +108,10 @@ impl ObjectPutMetadata {
       checksum_crc32: self.checksum_crc32,
     }
   }
+}
+
+pub(crate) fn checksum_crc32_base64(body: &[u8]) -> String {
+  STANDARD.encode(crc32fast::hash(body).to_be_bytes())
 }
 
 impl From<ObjectMetadata> for RuntimeObjectMetadata {

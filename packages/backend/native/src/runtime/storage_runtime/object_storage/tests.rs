@@ -3,7 +3,10 @@ use reqwest::StatusCode;
 use super::{
   config::ObjectStorageConfig,
   error::ObjectStorageError,
-  types::{MultipartUploadPart, ObjectPutMetadata, StorageProviderConfig, completed_multipart_parts, trim_etag},
+  types::{
+    MultipartUploadPart, ObjectPutMetadata, StorageProviderConfig, checksum_crc32_base64, completed_multipart_parts,
+    trim_etag,
+  },
 };
 
 fn storage_config(provider: &str, config: serde_json::Value) -> StorageProviderConfig {
@@ -364,4 +367,10 @@ fn object_storage_orders_completed_multipart_parts_and_trims_etags() {
   assert_eq!(parts[0].etag, "a");
   assert_eq!(parts[1].part_number, 2);
   assert_eq!(parts[1].etag, "b");
+}
+
+#[test]
+fn object_storage_crc32_checksum_uses_s3_base64_format() {
+  assert_eq!(checksum_crc32_base64(b"hello"), "NhCmhg==");
+  assert_ne!(checksum_crc32_base64(b"hello"), "3610a686");
 }
