@@ -275,14 +275,7 @@ export class StorageBlobJob {
       return;
     }
 
-    const result = await this.rt.planUnreferencedWorkspaceBlobs(
-      workspaceId,
-      gracePeriodDays,
-      limit
-    );
-    this.logger.log(
-      `planned blob cleanup workspace=${workspaceId} run=${result.runId} candidates=${result.candidatesMarked} scanned=${result.scannedBlobs}`
-    );
+    await this.drainBlobCleanupPlanning(workspaceId, gracePeriodDays, limit);
   }
 
   @OnJob('backendRuntime.planUnreferencedWorkspaceBlobsBySid')
@@ -314,13 +307,11 @@ export class StorageBlobJob {
 
     for (const workspace of workspaces) {
       try {
-        const result = await this.rt.planUnreferencedWorkspaceBlobs(
+        await this.drainBlobCleanupPlanning(
           workspace.id,
           gracePeriodDays,
-          limit
-        );
-        this.logger.log(
-          `planned blob cleanup workspace=${workspace.id} sid=${workspace.sid} run=${result.runId} candidates=${result.candidatesMarked} scanned=${result.scannedBlobs}`
+          limit,
+          { sid: workspace.sid }
         );
       } catch (err) {
         this.logger.error(
@@ -402,6 +393,27 @@ export class StorageBlobJob {
       );
       this.logger.log(
         `rebuilt doc blob refs workspace=${workspaceId}${context.sid === undefined ? '' : ` sid=${context.sid}`} parsed=${result.parsedDocs} failed=${result.failedDocs}`
+      );
+      if (!result.nextCursor) {
+        break;
+      }
+    }
+  }
+
+  private async drainBlobCleanupPlanning(
+    workspaceId: string,
+    gracePeriodDays: number,
+    limit: number,
+    context: { sid?: number } = {}
+  ) {
+    for (;;) {
+      const result = await this.rt.planUnreferencedWorkspaceBlobs(
+        workspaceId,
+        gracePeriodDays,
+        limit
+      );
+      this.logger.log(
+        `planned blob cleanup workspace=${workspaceId}${context.sid === undefined ? '' : ` sid=${context.sid}`} run=${result.runId} candidates=${result.candidatesMarked} scanned=${result.scannedBlobs}`
       );
       if (!result.nextCursor) {
         break;

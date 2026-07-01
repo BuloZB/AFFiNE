@@ -156,3 +156,60 @@ test('doc blob refs sweep continues after one workspace fails', async t => {
     )
   );
 });
+
+test('blob cleanup planning drains each workspace cursor before continuing', async t => {
+  t.context.db.workspace.findMany.resolves([
+    { id: 'workspace-1', sid: 1 },
+    { id: 'workspace-2', sid: 2 },
+  ]);
+  t.context.runtime.planUnreferencedWorkspaceBlobs
+    .onFirstCall()
+    .resolves({
+      runId: 'run-1',
+      scannedBlobs: 100,
+      candidatesMarked: 100,
+      nextCursor: 'cursor-1',
+    })
+    .onSecondCall()
+    .resolves({
+      runId: 'run-2',
+      scannedBlobs: 50,
+      candidatesMarked: 40,
+      nextCursor: null,
+    })
+    .onThirdCall()
+    .resolves({
+      runId: 'run-3',
+      scannedBlobs: 1,
+      candidatesMarked: 0,
+      nextCursor: null,
+    });
+
+  await t.context.job.planUnreferencedWorkspaceBlobsBySid({
+    workspaceLimit: 2,
+    gracePeriodDays: 14,
+    limit: 100,
+  });
+
+  t.is(t.context.runtime.planUnreferencedWorkspaceBlobs.callCount, 3);
+  t.deepEqual(t.context.runtime.planUnreferencedWorkspaceBlobs.firstCall.args, [
+    'workspace-1',
+    14,
+    100,
+  ]);
+  t.deepEqual(
+    t.context.runtime.planUnreferencedWorkspaceBlobs.secondCall.args,
+    ['workspace-1', 14, 100]
+  );
+  t.deepEqual(t.context.runtime.planUnreferencedWorkspaceBlobs.thirdCall.args, [
+    'workspace-2',
+    14,
+    100,
+  ]);
+  t.true(
+    t.context.queue.add.calledWith(
+      'backendRuntime.planUnreferencedWorkspaceBlobsBySid',
+      { lastSid: 2, workspaceLimit: 2, gracePeriodDays: 14, limit: 100 }
+    )
+  );
+});
