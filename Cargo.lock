@@ -224,6 +224,7 @@ dependencies = [
  "rand 0.9.4",
  "rayon",
  "reqwest",
+ "rustls",
  "rusty-s3",
  "safefetch",
  "schemars",
@@ -239,6 +240,7 @@ dependencies = [
  "url",
  "uuid",
  "v_htmlescape",
+ "webpki-roots 1.0.6",
  "y-octo",
 ]
 

@@ -1,7 +1,5 @@
 use std::{
   collections::HashMap,
-  future::Future,
-  pin::Pin,
   time::{Duration, SystemTime},
 };
 
@@ -10,6 +8,7 @@ use reqwest::{
   Client as ReqwestClient, Method, StatusCode,
   header::{CONTENT_LENGTH, CONTENT_TYPE, ETAG, HeaderMap, HeaderName, HeaderValue, LAST_MODIFIED},
 };
+use rustls::RootCertStore;
 use rusty_s3::{
   Bucket, Credentials,
   actions::{
@@ -31,8 +30,6 @@ const DEFAULT_REQUEST_TIMEOUT_MS: u64 = 30_000;
 const MAX_MULTIPART_PART_NUMBER: i32 = 10_000;
 const MAX_RESPONSE_BODY_BYTES: usize = i32::MAX as usize;
 
-type StorageHttpFuture<'a> = Pin<Box<dyn Future<Output = ObjectStorageResult<StorageHttpResponse>> + Send + 'a>>;
-
 #[derive(Clone)]
 struct StorageHttpRequest {
   method: Method,
@@ -48,10 +45,6 @@ struct StorageHttpResponse {
   body: Vec<u8>,
 }
 
-trait StorageHttpClient: Clone + Send + Sync + 'static {
-  fn execute(&self, request: StorageHttpRequest) -> StorageHttpFuture<'_>;
-}
-
 #[derive(Clone)]
 struct ReqwestStorageHttpClient {
   client: ReqwestClient,
@@ -59,50 +52,61 @@ struct ReqwestStorageHttpClient {
 
 impl ReqwestStorageHttpClient {
   fn new(request_timeout_ms: Option<u64>) -> ObjectStorageResult<Self> {
-    let builder = ReqwestClient::builder().timeout(Duration::from_millis(
-      request_timeout_ms.unwrap_or(DEFAULT_REQUEST_TIMEOUT_MS),
-    ));
+    let builder = ReqwestClient::builder()
+      .tls_backend_preconfigured(Self::webpki_tls_config()?)
+      .timeout(Duration::from_millis(
+        request_timeout_ms.unwrap_or(DEFAULT_REQUEST_TIMEOUT_MS),
+      ));
     Ok(Self {
       client: builder.build().map_err(ObjectStorageError::HttpClientBuild)?,
     })
   }
-}
 
-impl StorageHttpClient for ReqwestStorageHttpClient {
-  fn execute(&self, request: StorageHttpRequest) -> StorageHttpFuture<'_> {
-    Box::pin(async move {
-      let mut builder = self.client.request(request.method, request.url);
-      for (key, value) in request.headers {
-        let name =
-          HeaderName::from_bytes(key.as_bytes()).map_err(|err| ObjectStorageError::InvalidHeader(err.to_string()))?;
-        let value = HeaderValue::from_str(&value).map_err(|err| ObjectStorageError::InvalidHeader(err.to_string()))?;
-        builder = builder.header(name, value);
-      }
-      if let Some(body) = request.body {
-        builder = builder.body(body);
-      }
-      let mut response = builder.send().await.map_err(ObjectStorageError::HttpRequest)?;
-      let status = response.status();
-      let headers = response.headers().clone();
-      if response
-        .content_length()
-        .is_some_and(|length| length > request.max_response_body_bytes as u64)
-      {
+  fn webpki_tls_config() -> ObjectStorageResult<rustls::ClientConfig> {
+    let roots = RootCertStore {
+      roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
+    };
+    Ok(
+      rustls::ClientConfig::builder_with_provider(rustls::crypto::aws_lc_rs::default_provider().into())
+        .with_safe_default_protocol_versions()
+        .map_err(|err| ObjectStorageError::Config(format!("ObjectStorage TLS config failed: {err}")))?
+        .with_root_certificates(roots)
+        .with_no_client_auth(),
+    )
+  }
+
+  async fn execute(&self, request: StorageHttpRequest) -> ObjectStorageResult<StorageHttpResponse> {
+    let mut builder = self.client.request(request.method, request.url);
+    for (key, value) in request.headers {
+      let name =
+        HeaderName::from_bytes(key.as_bytes()).map_err(|err| ObjectStorageError::InvalidHeader(err.to_string()))?;
+      let value = HeaderValue::from_str(&value).map_err(|err| ObjectStorageError::InvalidHeader(err.to_string()))?;
+      builder = builder.header(name, value);
+    }
+    if let Some(body) = request.body {
+      builder = builder.body(body);
+    }
+    let mut response = builder.send().await.map_err(ObjectStorageError::HttpRequest)?;
+    let status = response.status();
+    let headers = response.headers().clone();
+    if response
+      .content_length()
+      .is_some_and(|length| length > request.max_response_body_bytes as u64)
+    {
+      return Err(ObjectStorageError::BodyTooLarge {
+        limit: request.max_response_body_bytes,
+      });
+    }
+    let mut body = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(ObjectStorageError::HttpRequest)? {
+      if body.len() + chunk.len() > request.max_response_body_bytes {
         return Err(ObjectStorageError::BodyTooLarge {
           limit: request.max_response_body_bytes,
         });
       }
-      let mut body = Vec::new();
-      while let Some(chunk) = response.chunk().await.map_err(ObjectStorageError::HttpRequest)? {
-        if body.len() + chunk.len() > request.max_response_body_bytes {
-          return Err(ObjectStorageError::BodyTooLarge {
-            limit: request.max_response_body_bytes,
-          });
-        }
-        body.extend_from_slice(&chunk);
-      }
-      Ok(StorageHttpResponse { status, headers, body })
-    })
+      body.extend_from_slice(&chunk);
+    }
+    Ok(StorageHttpResponse { status, headers, body })
   }
 }
 
@@ -689,6 +693,11 @@ mod tests {
   use reqwest::header::HeaderValue;
 
   use super::*;
+
+  #[test]
+  fn reqwest_storage_http_client_builds_with_webpki_roots() {
+    ReqwestStorageHttpClient::new(Some(1_000)).unwrap();
+  }
 
   #[test]
   fn metadata_from_headers_uses_s3_defaults_and_checksum() {
