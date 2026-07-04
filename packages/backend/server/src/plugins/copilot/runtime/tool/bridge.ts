@@ -182,4 +182,4 @@ export function createToolLoopBridge(
 
 // re-export for test consumers
 export type { LlmToolCallbackRequest } from '../../../../native';
-export type { CopilotToolSet, CopilotToolExecuteOptions } from '../../tools';
+export type { CopilotToolExecuteOptions, CopilotToolSet } from '../../tools';

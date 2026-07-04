@@ -2507,6 +2507,14 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.import.notion.tooltip"](): string;
     /**
+      * `Notion (Markdown, .zip)`
+      */
+    ["com.affine.import.notion-markdown"](): string;
+    /**
+      * `Import a Notion Markdown export zip with subpages and attachments.`
+      */
+    ["com.affine.import.notion-markdown.tooltip"](): string;
+    /**
       * `Obsidian Vault (Experimental)`
       */
     ["com.affine.import.obsidian"](): string;
