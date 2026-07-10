@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 
-import { AuthenticationRequired, CryptoHelper } from '../../base';
+import { AuthenticationRequired, Config, CryptoHelper } from '../../base';
 import { Models } from '../../models';
 import { sessionUser } from './service';
 import type { CurrentUser, Session } from './session';
@@ -9,7 +9,6 @@ import type { CurrentUser, Session } from './session';
 const JWT_SESSION_TYPE = 'user_session';
 const JWT_SESSION_ISSUER = 'affine';
 const JWT_SESSION_AUDIENCE = 'affine-client';
-const JWT_SESSION_TTL = 15 * 60;
 
 export interface SignedJwtSession {
   token: string;
@@ -37,7 +36,8 @@ function isUserSessionJwtPayload(
 export class JwtSessionService {
   constructor(
     private readonly crypto: CryptoHelper,
-    private readonly models: Models
+    private readonly models: Models,
+    private readonly config: Config
   ) {}
 
   private get currentKey() {
@@ -48,14 +48,15 @@ export class JwtSessionService {
   }
 
   sign(userId: string, sessionId: string): SignedJwtSession {
-    const expiresAt = new Date(Date.now() + JWT_SESSION_TTL * 1000);
+    const ttl = this.config.auth.session.ttl;
+    const expiresAt = new Date(Date.now() + ttl * 1000);
     const token = jwt.sign(
       { sid: sessionId, typ: JWT_SESSION_TYPE },
       this.currentKey,
       {
         algorithm: 'HS256',
         audience: JWT_SESSION_AUDIENCE,
-        expiresIn: JWT_SESSION_TTL,
+        expiresIn: ttl,
         issuer: JWT_SESSION_ISSUER,
         subject: userId,
       }
