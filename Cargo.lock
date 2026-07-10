@@ -70,7 +70,7 @@ dependencies = [
  "napi",
  "rand 0.9.4",
  "rayon",
- "sha3",
+ "sha3 0.12.0",
  "tempfile",
 ]
 
@@ -264,7 +264,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.11.0",
- "sha3",
+ "sha3 0.12.0",
  "sqlx",
  "tempfile",
  "thiserror 2.0.18",
@@ -531,7 +531,7 @@ dependencies = [
  "futures-util",
  "hex",
  "serde",
- "sha3",
+ "sha3 0.11.0",
  "sqlx",
  "tempfile",
  "thiserror 2.0.18",
@@ -2321,6 +2321,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "fancy-regex"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1e1dacd0d2082dfcf1351c4bdd566bbe89a2b263235a2b50058f1e130a47277"
+dependencies = [
+ "bit-set 0.8.0",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
 name = "fast-float2"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3988,31 +3999,40 @@ dependencies = [
 
 [[package]]
 name = "jsonschema"
-version = "0.46.2"
+version = "0.47.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50180452e7808015fe083eae3efcf1ec98b89b45dd8cc204f7b4a6b7b81ea675"
+checksum = "281c43ff06dcb331e9356d30e38853d559ce3d0a3f693e0b0e102667dec14fb1"
 dependencies = [
  "ahash",
  "bytecount",
  "data-encoding",
  "email_address",
- "fancy-regex 0.17.0",
+ "fancy-regex 0.18.0",
  "fraction",
  "getrandom 0.3.4",
  "idna",
  "itoa",
+ "jsonschema-regex",
  "num-cmp",
  "num-traits",
  "percent-encoding",
  "referencing",
  "regex",
- "regex-syntax",
  "reqwest",
  "rustls",
  "serde",
  "serde_json",
  "unicode-general-category",
  "uuid-simd",
+]
+
+[[package]]
+name = "jsonschema-regex"
+version = "0.47.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee0b351864e7ffbc5db9273daf7fa1b4d5177b0946713d667ca571b83c0b4045"
+dependencies = [
+ "regex-syntax",
 ]
 
 [[package]]
@@ -4273,16 +4293,16 @@ dependencies = [
 
 [[package]]
 name = "llm_adapter"
-version = "0.2.7"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "332397a6ccde5ac47fc32b29a2eed447135eb4ff6fd05ffb88dfe937ea9c8211"
+checksum = "b5edfe10ad51d5301468a395532cb0068caac1057fbda942edebe423fe585509"
 dependencies = [
  "base64",
  "jsonschema",
  "schemars",
  "serde",
  "serde_json",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "thiserror 2.0.18",
  "ureq",
  "url",
@@ -4290,9 +4310,9 @@ dependencies = [
 
 [[package]]
 name = "llm_runtime"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "804da5b8087fe2ec5d48f4b0716d5cf3639d6feb1c4242a6364ccdb7ef5bfa61"
+checksum = "2705eff96fcd8e21cb9f23245da8f6da260133dfaa9e6280840f426a6290cb9e"
 dependencies = [
  "jsonschema",
  "llm_adapter",
@@ -6095,14 +6115,14 @@ dependencies = [
 
 [[package]]
 name = "referencing"
-version = "0.46.2"
+version = "0.47.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acb0c66c7b78c1da928bee668b5cc638c678642ff587faff6e6222f797be9d4c"
+checksum = "348e860aeb0b7bd035778fd11dd9cd5290d32e4aed3b8f2274a00287a9fd362b"
 dependencies = [
  "ahash",
  "fluent-uri",
  "getrandom 0.3.4",
- "hashbrown 0.16.1",
+ "hashbrown 0.17.1",
  "itoa",
  "micromap",
  "parking_lot",
@@ -6497,11 +6517,12 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "0.8.22"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fbf2ae1b8bc8e02df939598064d22402220cd5bbcca1c76f7d6a310974d5615"
+checksum = "a2b42f36aa1cd011945615b92222f6bf73c599a102a300334cd7f8dbeec726cc"
 dependencies = [
  "dyn-clone",
+ "ref-cast",
  "schemars_derive",
  "serde",
  "serde_json",
@@ -6509,9 +6530,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "0.8.22"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32e265784ad618884abaea0600a9adf15393368d840e0222d101a072f3f7534d"
+checksum = "7d115b50f4aaeea07e79c1912f645c7513d81715d0420f8bc77a18c6260b307f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6758,6 +6779,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha3"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc9bad02c26382724b2d2692c6f179285e4b54eeecd7968f52a50059c3c11759"
+dependencies = [
+ "digest 0.11.3",
+ "keccak",
+ "sponge-cursor",
+]
+
+[[package]]
 name = "sharded-slab"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6923,6 +6955,12 @@ dependencies = [
  "base64ct",
  "der",
 ]
+
+[[package]]
+name = "sponge-cursor"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a0219bd7d979d58245a4f41f695e1ac9f8befdffadd7f61f1bae9e39abc6620"
 
 [[package]]
 name = "sqlx"

@@ -78,12 +78,12 @@ resolver = "3"
   rayon = "1.10"
   rubato = "0.16"
   safefetch = "0.1.0"
-  schemars = "0.8"
+  schemars = "1.2"
   screencapturekit = "0.3"
   serde = "1"
   serde_json = "1"
   sha2 = "0.11"
-  sha3 = "0.11"
+  sha3 = "0.12"
   sqlx = { version = "0.8", default-features = false, features = [
     "chrono",
     "macros",

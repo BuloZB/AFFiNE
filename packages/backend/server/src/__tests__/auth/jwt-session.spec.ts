@@ -107,28 +107,31 @@ test.serial('should sign and verify a user session jwt', async t => {
   t.true(signed.expiresAt.getTime() > Date.now());
 });
 
-test.serial('should use application session ttl for jwt expiration', async t => {
-  const defaultSigned = t.context.jwtSession.sign(
-    t.context.user.id,
-    t.context.sessionId
-  );
-  assertSignedTtl(t, defaultSigned, DEFAULT_SESSION_TTL);
+test.serial(
+  'should use application session ttl for jwt expiration',
+  async t => {
+    const defaultSigned = t.context.jwtSession.sign(
+      t.context.user.id,
+      t.context.sessionId
+    );
+    assertSignedTtl(t, defaultSigned, DEFAULT_SESSION_TTL);
 
-  const ttl = 120;
-  t.context.config.override({
-    auth: {
-      session: {
-        ttl,
+    const ttl = 120;
+    t.context.config.override({
+      auth: {
+        session: {
+          ttl,
+        },
       },
-    },
-  });
+    });
 
-  const configuredSigned = t.context.jwtSession.sign(
-    t.context.user.id,
-    t.context.sessionId
-  );
-  assertSignedTtl(t, configuredSigned, ttl);
-});
+    const configuredSigned = t.context.jwtSession.sign(
+      t.context.user.id,
+      t.context.sessionId
+    );
+    assertSignedTtl(t, configuredSigned, ttl);
+  }
+);
 
 test.serial('should reject invalid jwt cases', async t => {
   const cases: Array<{ name: string; token: string }> = [
