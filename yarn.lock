@@ -262,6 +262,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@affine/auth@workspace:packages/common/auth":
+  version: 0.0.0-use.local
+  resolution: "@affine/auth@workspace:packages/common/auth"
+  dependencies:
+    vitest: "npm:^4.1.8"
+  languageName: unknown
+  linkType: soft
+
 "@affine/changelog@workspace:tools/changelog":
   version: 0.0.0-use.local
   resolution: "@affine/changelog@workspace:tools/changelog"

@@ -35,8 +35,8 @@ declare interface BUILD_CONFIG_TYPE {
   imageProxyUrl: string;
   linkPreviewUrl: string;
 
-  CAPTCHA_SITE_KEY: string;
   SENTRY_DSN: string;
+  CAPTCHA_SITE_KEY: string;
 }
 
 declare var BUILD_CONFIG: BUILD_CONFIG_TYPE;
