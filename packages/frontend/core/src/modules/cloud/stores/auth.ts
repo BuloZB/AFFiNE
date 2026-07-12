@@ -137,7 +137,22 @@ export class AuthStore extends Store {
   }
 
   async signOut() {
-    await this.authProvider.signOut();
+    try {
+      await this.authProvider.signOut();
+    } finally {
+      await this.deauthenticateRealtime();
+    }
+  }
+
+  async clearSession() {
+    try {
+      await this.authProvider.clearSession();
+    } finally {
+      await this.deauthenticateRealtime();
+    }
+  }
+
+  private async deauthenticateRealtime() {
     await this.nbstoreService.realtime.configure({
       endpoint: this.serverService.server.baseUrl,
       authenticated: false,
