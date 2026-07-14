@@ -138,9 +138,24 @@ test('should keep owned workspace writable when quota is within limit', async t 
   const state = await t.context.policy.reconcileWorkspaceQuotaState(
     workspace.id
   );
+  const quotaState = Reflect.get(
+    t.context.policy,
+    'quotaState'
+  ) as QuotaStateService;
+  const reconcile = Sinon.spy(quotaState, 'reconcileWorkspaceQuotaState');
 
   t.false(state.isReadonly);
   t.deepEqual(state.readonlyReasons, []);
+
+  await t.context.policy.getWorkspaceState(workspace.id);
+  t.is(reconcile.callCount, 0);
+
+  await t.context.db.effectiveWorkspaceQuotaState.update({
+    where: { workspaceId: workspace.id },
+    data: { stale: true },
+  });
+  await t.context.policy.getWorkspaceState(workspace.id);
+  t.is(reconcile.callCount, 1);
 });
 
 test('should report readonly state when fallback owner member quota overflows', async t => {

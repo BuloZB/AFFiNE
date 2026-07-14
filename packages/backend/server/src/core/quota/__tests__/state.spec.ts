@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { PrismaClient } from '@prisma/client';
 import ava, { ExecutionContext, TestFn } from 'ava';
+import Sinon from 'sinon';
 
 import {
   createTestingModule,
@@ -80,11 +81,19 @@ test('workspace quota state uses current member rows', async t => {
     },
   });
 
-  const state = await t.context.state.reconcileWorkspaceQuotaState(
-    workspace.id
+  const resolveWorkspaceEntitlement = Sinon.spy(
+    t.context.entitlement,
+    'resolveWorkspaceEntitlement'
   );
+  const [state] = await Promise.all([
+    t.context.state.reconcileWorkspaceQuotaState(workspace.id),
+    t.context.state.reconcileWorkspaceQuotaState(workspace.id),
+    t.context.state.reconcileWorkspaceQuotaState(workspace.id),
+  ]);
 
   t.is(state.memberCount, 1);
+  t.is(resolveWorkspaceEntitlement.callCount, 2);
+  resolveWorkspaceEntitlement.restore();
 });
 
 test('quota service exposes history period in seconds', async t => {
@@ -131,10 +140,20 @@ test('quota state reconcile does not publish unchanged snapshots', async t => {
     }
   });
 
-  await t.context.state.reconcileUserQuotaState(user.id);
+  const getActiveEntitlements = Sinon.spy(
+    t.context.entitlement,
+    'getActiveEntitlements'
+  );
+  await Promise.all([
+    t.context.state.reconcileUserQuotaState(user.id),
+    t.context.state.reconcileUserQuotaState(user.id),
+    t.context.state.reconcileUserQuotaState(user.id),
+  ]);
   await t.context.state.reconcileUserQuotaState(user.id);
 
   t.is(changes, 1);
+  t.is(getActiveEntitlements.callCount, 2);
+  getActiveEntitlements.restore();
 });
 
 test('workspace quota state requires owner from new permission table', async t => {
